@@ -77,7 +77,13 @@ CSV_FILE="${RAW_FILE%.gz}"
 
 if [[ ! -f "$CSV_FILE" ]]; then
     echo "Extracting CSV..."
-    gzip -dc "$RAW_FILE" > "$CSV_FILE"
+
+    TEMP_CSV="${CSV_FILE}.tmp"
+
+    gzip -dc "$RAW_FILE" > "$TEMP_CSV"
+
+    mv "$TEMP_CSV" "$CSV_FILE"
+
 else
     echo "Extracted CSV already exists. Skipping extraction."
 fi
@@ -90,14 +96,18 @@ echo "Output GeoParquet: $PARQUET_FILE"
 if [[ ! -f "$PARQUET_FILE" ]]; then
     echo "Converting CSV to GeoParquet..."
 
+    TEMP_PARQUET="${PARQUET_FILE%.parquet}.tmp.parquet"
+
     ogr2ogr \
         -f Parquet \
-        "$PARQUET_FILE" \
+        "$TEMP_PARQUET" \
         "$CSV_FILE" \
         -oo X_POSSIBLE_NAMES=BEGIN_LON \
         -oo Y_POSSIBLE_NAMES=BEGIN_LAT \
         -oo AUTODETECT_TYPE=YES \
         -a_srs EPSG:4326
+
+    mv "$TEMP_PARQUET" "$PARQUET_FILE"
 
 else
     echo "GeoParquet already exists. Skipping conversion."
