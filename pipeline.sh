@@ -8,9 +8,7 @@ set -euo pipefail
 # Configuration
 Year="${1:-2024}"
 
-CREATED_DATE="20260728"
 BASE_URL="https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles" 
-FILENAME="StormEvents_details-ftp_v1.0_d${Year}_c${CREATED_DATE}.csv.gz"
 RAW_DIR="data/raw"
 PROCESSED_DIR="data/processed"
 
@@ -19,6 +17,23 @@ mkdir -p "$RAW_DIR" "$PROCESSED_DIR"
 
 echo "Starting NOAA Storm Events Data Pipeline..."
 echo "Processing NOAA Storm Events for year: $Year"
+
+# Find the latest NOAA file for the selected year
+echo "Searching NOAA archive for ${Year}..."
+
+FILENAME=$(
+    curl -fsSL "$BASE_URL/" \
+    | grep -o "StormEvents_details-ftp_v1\.0_d${Year}_c[0-9]*\.csv\.gz" \
+    | sort -u \
+    | tail -n 1
+)
+
+echo "Found NOAA file: $FILENAME"
+
+if [[ -z "$FILENAME" ]]; then
+    echo "ERROR: No NOAA Storm Events file found for ${Year}."
+    exit 1
+fi
 
 # Download NOAA Data
 URL="${BASE_URL}/${FILENAME}"
