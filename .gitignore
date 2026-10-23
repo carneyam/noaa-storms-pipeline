@@ -1,0 +1,8 @@
+# Ignore downloaded and processed data
+data/
+
+# Ignore macOS metadata
+.DS_Store
+
+# Ignore temporary files
+*.tmp
