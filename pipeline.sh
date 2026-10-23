@@ -64,9 +64,17 @@ if [[ ! -f "$RAW_FILE" ]]; then
 
     TEMP_FILE="${RAW_FILE}.tmp"
 
-    curl -fL "$URL" -o "$TEMP_FILE"
+if ! curl -fL "$URL" -o "$TEMP_FILE"; then
+    echo "ERROR: Could not download NOAA Storm Events data." >&2
+    echo "Requested year: $Year" >&2
+    echo "Requested creation date: $FILE_CREATED_DATE" >&2
+    echo "Check that this file exists in NOAA's archive." >&2
 
-    mv "$TEMP_FILE" "$RAW_FILE"
+    rm -f "$TEMP_FILE"
+    exit 1
+fi
+
+mv "$TEMP_FILE" "$RAW_FILE"
 
 else
     echo "File already exists. Skipping."
