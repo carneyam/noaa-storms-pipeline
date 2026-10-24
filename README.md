@@ -4,9 +4,21 @@ A one-command pipeline that downloads a year of NOAA Storm Events data, converts
 
 ## What it does
 
-`pipeline.sh` takes a year (default: 2024), pulls the raw `details` file from NOAA's public archive, decompresses it, and converts it to a single GeoParquet file at `data/processed/storms_{YEAR}.parquet`.
+## What it does
 
-Total runtime: about 90 seconds for a typical year on a home internet connection.
+`pipeline.sh` automates the download, extraction, and conversion of NOAA Storm Events data into GeoParquet.
+
+The pipeline:
+
+1. Accepts a storm event year (default: 2024).
+2. Automatically identifies the most recent NOAA dataset revision for that year, unless a specific creation date is provided.
+3. Downloads the compressed CSV file from NOAA's public archive.
+4. Extracts the CSV and converts it into GeoParquet using GDAL, creating point geometries from the beginning latitude and longitude fields.
+5. Saves the processed dataset to `data/processed/storms_{YEAR}_c{CREATED_DATE}.parquet`.
+
+The script uses temporary files to reduce the risk of incomplete outputs and skips existing files during subsequent executions.
+
+Runtime varies by dataset size, internet connection, and whether the source files have already been processed. Subsequent runs skip completed processing stages.
 
 ## The data
 
@@ -17,7 +29,7 @@ Total runtime: about 90 seconds for a typical year on a home internet connection
 ### Data validation (2024)
 
 - Total records: 69,801
-- Records with valid point geometry: 42,190 (60.4%)
+- Records with non-null point geometry: 42,190 (60.4%)
 - Records with missing geometry: 27,611 (39.6%)
 - Missing geometries correspond to missing latitude/longitude values.
 - Geometry type: Point
@@ -27,13 +39,40 @@ Records without coordinates are preserved in the GeoParquet output.
 
 ## How to run it
 
-Requires GDAL (for `ogr2ogr`) and standard Unix utilities (`curl`, `gunzip`).
+Clone the repository:
+```bash
+git clone https://github.com/carneyam/noaa-storms-pipeline.git
+cd noaa-storms-pipeline
+chmod +x pipeline.sh
+```
 
-## Process 2024 (default)
+Process 2024 (default):
+```bash
 ./pipeline.sh
+```
 
-## Process a specific year
+Process a specific year using the latest available revision:
+```bash
 ./pipeline.sh 2023
+```
+
+Process a specific year and creation date:
+```bash
+./pipeline.sh 2023 20260323
+```
+
+## Created file location
+The processed GeoParquet file is saved in the project's `data/processed/` directory using the naming convention:
+
+`storms_{YEAR}_c{CREATED_DATE}.parquet`
+
+For example, processing the 2023 dataset created on March 23, 2026, produces:
+
+`data/processed/storms_2023_c20260323.parquet`
+
+The output directory is created automatically within the repository's local folder, regardless of where the script is executed. Different NOAA revisions are saved as separate files, preserving the source creation date.
+
+The `data/` directory is excluded from Git and is not uploaded to GitHub.
 
 ## What I learned
 
