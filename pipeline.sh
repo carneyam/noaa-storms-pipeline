@@ -10,8 +10,13 @@ Year="${1:-2024}"
 CREATED_DATE="${2:-}"
 
 BASE_URL="https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles" 
-RAW_DIR="data/raw"
-PROCESSED_DIR="data/processed"
+
+# Determine the directory containing this script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Define data directories relative to the script
+RAW_DIR="${SCRIPT_DIR}/data/raw"
+PROCESSED_DIR="${SCRIPT_DIR}/data/processed"
 
 #Create directories if they do not exist
 mkdir -p "$RAW_DIR" "$PROCESSED_DIR"
@@ -33,11 +38,14 @@ else
     echo "Searching NOAA archive for ${Year}..."
 
     FILENAME=$(
-        curl -fsSL "$BASE_URL/" \
-        | grep -o "StormEvents_details-ftp_v1\.0_d${Year}_c[0-9]*\.csv\.gz" \
-        | sort -u \
-        | tail -n 1
-    )
+    curl -fsSL "$BASE_URL/" \
+    | grep -o "StormEvents_details-ftp_v1\.0_d${Year}_c[0-9]*\.csv\.gz" \
+    | sort -u \
+    | tail -n 1
+) || {
+    echo "ERROR: Could not find NOAA data for year ${Year}." >&2
+    exit 1
+}
 
 fi
 
